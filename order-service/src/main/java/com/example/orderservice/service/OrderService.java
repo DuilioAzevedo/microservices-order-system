@@ -1,40 +1,35 @@
 package com.example.orderservice.service;
 
 import com.example.orderservice.client.UserClient;
+import com.example.orderservice.dto.OrderResponse;
 import com.example.orderservice.model.Order;
+import com.example.orderservice.model.User;
 import com.example.orderservice.repository.OrderRepository;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class OrderService {
 
-    private final OrderRepository repository;
+    private final OrderRepository orderRepository;
     private final UserClient userClient;
 
-    public OrderService(OrderRepository repository, UserClient userClient) {
-        this.repository = repository;
+    // 👇 CONSTRUTOR MANUAL (resolve o erro)
+    public OrderService(OrderRepository orderRepository, UserClient userClient) {
+        this.orderRepository = orderRepository;
         this.userClient = userClient;
     }
 
-    public Order create(Order order){
+    public OrderResponse getOrderById(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        // 🔥 chama o outro microserviço
-        Object user = userClient.getUserById(order.getUserId());
+        User user = userClient.getUserById(order.getUserId());
 
-        if (user == null) {
-            throw new RuntimeException("User not found");
-        }
+        OrderResponse response = new OrderResponse();
+        response.setId(order.getId());
+        response.setProduct(order.getProduct());
+        response.setUser(user);
 
-        return repository.save(order);
-    }
-
-    public List<Order> getAll(){
-        return repository.findAll();
-    }
-
-    public Order getById(Long id){
-        return repository.findById(id).orElse(null);
+        return response;
     }
 }
